@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <title>Inga</title>
+  <style>
+    canvas {
+      background: #f0f0f0;
+      display: block;
+      margin: 0 auto;
+      border: 1px solid #ccc;
+    }
+    .controls {
+      text-align: center;
+      margin-top: 20px;
+      font-family: sans-serif;
+    }
+    label {
+      margin-right: 20px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="1000" height="600"></canvas>
+  
+  <div class="controls">
+    <label>
+      Zsinór hossza (m): 
+      <input type="range" id="hosszSlider" min="0.5" max="2.4" step="0.1" value="2">
+      <span id="hosszErtek">2</span> m
+    </label>
+    <label>
+      Gravitáció (m/s²): 
+      <input type="range" id="gravitacioSlider" min="0" max="20" step="0.1" value="9.81">
+      <span id="gravitaciosErtek">9.81</span> m/s²
+    </label>
+    <label>
+      Kezdőszög (°):
+      <input type="range" id="szogSlider" min="1" max="90" step="1" value="45">
+      <span id="szogErtek">45</span> °
+    </label>
+    <br><br>
+    <button onclick="start()">Start</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const origin = { x: canvas.width / 2, y: 100 };
+    const pixelPerMeter = 200;
+    const dt = 1 / 60;
+
+    // Alapértékek
+    let hossz = 2;
+    let gravitacio = 9.81;
+    let angleDeg = 45;
+    let szog = (angleDeg * Math.PI) / 180;
+    let szogsebesseg = 0;
+    let szoggyorsulas = 0;
+    const surlodas = 0.995;
+
+    let animationId = null;
+
+    // csuszkak
+    const hosszSlider = document.getElementById("hosszSlider");
+    const gravitacioSlider = document.getElementById("gravitacioSlider");
+    const szogSlider = document.getElementById("szogSlider");
+
+    const hosszErtek = document.getElementById("hosszErtek");
+    const gravitaciosErtek = document.getElementById("gravitaciosErtek");
+    const szogErtek = document.getElementById("szogErtek");
+
+    // Frissítés események
+    hosszSlider.oninput = () => {
+      hossz = parseFloat(hosszSlider.value);
+      hosszErtek.textContent = hossz;
+      start();
+    };
+    gravitacioSlider.oninput = () => {
+      gravitacio = parseFloat(gravitacioSlider.value);
+      gravitaciosErtek.textContent = gravitacio;
+      start();
+    };
+    szogSlider.oninput = () => {
+      angleDeg = parseFloat(szogSlider.value);
+      szogErtek.textContent = angleDeg;
+      start();
+    };
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      szoggyorsulas = (-gravitacio / hossz) * Math.sin(szog);
+      szogsebesseg += szoggyorsulas * dt;
+      szogsebesseg *= surlodas;
+      szog += szogsebesseg * dt;
+
+      const x = origin.x + Math.sin(szog) * hossz * pixelPerMeter;
+      const y = origin.y + Math.cos(szog) * hossz * pixelPerMeter;
+
+      // zsinor
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // golyo
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fillStyle = "red";
+      ctx.fill();
+
+      animationId = requestAnimationFrame(draw);
+    }
+    function start() {
+      cancelAnimationFrame(animationId);
+      szog = (angleDeg * Math.PI) / 180;
+      szogsebesseg = 0;
+      szoggyorsulas = 0;
+      draw();
+    }
+    start();
+  </script>
+</body>
+</html>
